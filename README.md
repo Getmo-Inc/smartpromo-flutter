@@ -1,25 +1,14 @@
-# SmartPromoSampleFlutter
+# SmartPromo Flutter
 
-A new Flutter project.
+O SmartPromo é uma SDK para envio de notas em campanhas promocionais, compatível com Android API 21+ e iOS 11+
 
-## Getting Started
+## Instalação
 
-This project is a starting point for a Flutter application.
+### Android
 
-A few resources to get you started if this is your first Flutter project:
+Primeiramente confirme que seu projeto Android esteja configurado para `minSdkVersion 21` ou superior.
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-## Android
-
-minSdkVersion 21
-
-### Gradle
+#### Gradle
 SmartPromo pode ser adicionado no seu projeto `Android` utilizando o `Gradle`, para isto adicione o repositório do `jitpack.io` ao seu arquivo `build.gradle` a nível de `projeto`, dentro de `allprojects` e `repositories`:
 ```
 allprojects {
@@ -34,37 +23,155 @@ Agora adicione a dependência abaixo ao arquivo `build.gradle` a nível de `mód
 
     implementation 'org.bitbucket.getmo:android-smartpromo:1.9'
     
-Para finalizar, você precisa adicionar a compatibilidade com o Java 8 no `build.gradle` no seu modulo:
+Você também precisa adicionar a compatibilidade com o Java 8 no `build.gradle` no seu módulo:
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-## iOS
 
-IPHONEOS_DEPLOYMENT_TARGET = 11.0;
+#### Kotlin
+
+Agora no arquivo `MainActivity.kt` vamos adicionar a camada de abstração do Android. Aqui é um código pronto que você só precisa colar dentro da classe:
+
+```
+    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "br.com.getmo.smartpromo"
+        ).setMethodCallHandler { call, _ ->
+
+            (call.arguments as? Map<String, Any>)?.let { config ->
+                when (call.method) {
+                    "go" -> go(config)
+                    "scan" -> scan(config)
+                }
+            }
+        }
+    }
+
+    private fun go(config: Map<String, Any>) {
+        val smartPromo = smartPromo(config)
+        smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
+        smartPromo?.go(this)
+    }
+
+    private fun scan(config: Map<String, Any>) {
+        (config["consumerID"] as? String)?.let { consumerID ->
+            val smartPromo = smartPromo(config)
+            smartPromo?.scan(consumerID, this)
+        }
+    }
+
+    private fun smartPromo(config: Map<String, Any>): SmartPromo? {
+        val campaign = config["campaign"] as? String
+        val key = config["key"] as? String
+        val secret = config["secret"] as? String
+
+        if (campaign == null || key == null || secret == null) {
+            return null
+        }
+
+        val smartPromo = SmartPromo(campaign)
+        smartPromo.setupAccessKeyAndSecretKey(key, secret)
+
+        (config["color"] as? String)?.let {
+            smartPromo.setColor(Color.parseColor(it))
+        }
+
+        return smartPromo
+    }
+
+    private fun consumer(dict: Map<String, Any>?): FSPConsumer? {
+        if (dict == null) return null
+
+        val consumer = FSPConsumer()
+        consumer.cpf = dict["cpf"] as? String
+        consumer.name = dict["name"] as? String
+        consumer.email = dict["email"] as? String
+        consumer.phone = dict["phone"] as? String
+        consumer.bdate = SimpleDateFormat("yyyy-MM-dd")
+            .parse(dict["birthday"] as? String ?: "")
+
+        when (dict["gender"] as? String) {
+            "M" -> consumer.genre = FSPGenre.MALE
+            "F" -> consumer.genre = FSPGenre.FEMALE
+            "NB" -> consumer.genre = FSPGenre.NOT_BINARY
+            else -> consumer.genre = FSPGenre.NOT_INFORMED
+        }
+
+        consumer.address = address(dict["address"] as? Map<String, String>)
+        return consumer
+    }
+
+    private fun address(dict: Map<String, String>?): FSPAddress? {
+        if (dict == null) return null
+
+        val address = FSPAddress()
+        address.streetName = dict["streetName"]
+        address.streetNumber = dict["streetNumber"]
+        address.complement = dict["complement"]
+        address.neighborhood = dict["neighborhood"]
+        address.city = dict["city"]
+        address.state = dict["state"]
+        address.zipCode = dict["zipCode"]
+        return address
+    }
+
+```
+
+### iOS
+
+Primeiramente confirme que seu projeto iOS esteja configurado para `IPHONEOS_DEPLOYMENT_TARGET = 11.0;` ou superior.
+
+#### Cocoapods
+
+Caso seu projeto ainda não esteja utilizando o `Cocoapods`, precisaremos inicializar ele: 
+```
 cd ios
 pod init
+```
+
+Adicione a SDK no arquivo `Podfile`:
+```
 pod 'SmartPromo', '1.9'
+```
+
+E rode o comando de instalação:
+```
 pod install
+```
 
-import Flutter
+#### Swift
+
+Confira se o seu projeto tem declarada a permissão de câmera (NSCameraUsageDescription) no arquivo info.plist a chave NSCameraUsageDescription.
+
+Agora no arquivo `AppDelegate.swift` vamos adicionar a camada de abstração do iOS.
+Primeiro vamos importar a SDK:
+```
 import SmartPromo
+```
 
+Então chamar a função que iremos criar em seguida na função `didFinishLaunchingWithOptions`: 
+```
     override func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
         
-        // Observe Flutter Functions
-        observeMethods()
+        // SmartPromo
+        observeSmartPromoMethods()
+```
 
+Aqui é um código pronto que você só precisa colar dentro do arquivo:
 
+```
 // MARK: - SmartPromo
 extension AppDelegate {
     
-    private func observeMethods() {
+    private func observeSmartPromoMethods() {
         guard let controller = window?.rootViewController as? FlutterViewController else { return }
         let channel = FlutterMethodChannel(name: "br.com.getmo.smartpromo", binaryMessenger: controller.binaryMessenger)
         channel.setMethodCallHandler { [weak self] call, _ -> Void in
@@ -171,30 +278,48 @@ extension AppDelegate {
         )
     }
 }
+```
 
+### Utilização no Flutter
 
-## Flutter
+A parte final é utilizar a camada de abstração criada no seu projeto Flutter.
+Precisamos importar a classe de serviços:
+```
 import 'package:flutter/services.dart';
-static const smartPromo = MethodChannel('br.com.getmo.smartpromo');
+```
 
- Map _config() {
+E então para começar a utilizar o SmartPromo, você precisa inicializar com o id da campanha e configurar as suas chaves de acesso:
+```
+  Map _createConfig() {
     return {
-      "campaign": "E3F3BBEABC8344FB",
-      "key": "QXS7TR2M3KQF2A9G",
-      "secret":
-          "gRXdR9aV4QxpXBarMq6G9rsz25MwkdryKU2mShYJkaPstguV7QnN6YPJ8CUytL97",
+      "campaign": "{campaignID}",
+      "key": "{accessKey}",
+      "secret": "{secretKey}",
       "color": "#18AC4F"
     };
   }
+```
 
-  Map _consumer() {
+##### Iniciando a SDK no modo campanha:
+```
+  MethodChannel _smartPromo() {
+    return MethodChannel('br.com.getmo.smartpromo');
+  }
+  
+  void _go() {
+    var config = _createConfig();
+    config["consumer"] = _createConsumer();
+    _smartPromo().invokeMethod('go', config);
+  }
+
+  Map _createConsumer() {
     return {
-      "cpf": "23365159037",
+      "cpf": "{cpf}",
       "name": "Consumer Name",
       "email": "mail@mail.com",
       "phone": "51999999999",
       "birthday": "2000-12-31",
-      "gender": "NB", // M, F, NB, NI
+      "gender": "NI", // M, F, NB, NI
       "address": {
         "streetName": "Rua A",
         "streetNumber": "100",
@@ -206,15 +331,16 @@ static const smartPromo = MethodChannel('br.com.getmo.smartpromo');
       }
     };
   }
-
-  void _go() {
-    var config = _config();
-    config["consumer"] = _consumer();
-    smartPromo.invokeMethod('go', config);
-  }
-
+ ```
+ 
+ ##### Iniciando a SDK no modo Scanner de notas:
+```
   void _scan() {
-    var config = _config();
-    config["consumerID"] = "23365159037";
-    smartPromo.invokeMethod('scan', config);
+    var config = _createConfig();
+    config["consumerID"] = "{cpf}";
+    _smartPromo().invokeMethod('scan', config);
   }
+ ```
+ 
+    
+ > __campaignID__, __accessKey__, e __secretKey__ serão fornecidos pelo time da __Getmo__ para serem configurados no seu projeto.
