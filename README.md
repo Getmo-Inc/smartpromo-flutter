@@ -33,8 +33,21 @@ Você também precisa adicionar a compatibilidade com o Java 8 no `build.gradle`
 
 #### Kotlin
 
-Agora no arquivo `MainActivity.kt` vamos adicionar a camada de abstração do Android. Aqui é um código pronto que você só precisa colar dentro da classe:
+Agora no arquivo `MainActivity.kt` vamos adicionar a camada de abstração do Android. 
+Primeiro precisamos importar alguns arquivos:
+```
+import android.graphics.Color
+import androidx.annotation.NonNull
+import br.com.getmo.smartpromo.SmartPromo
+import br.com.getmo.smartpromo.models.FSPAddress
+import br.com.getmo.smartpromo.models.FSPConsumer
+import br.com.getmo.smartpromo.models.FSPGenre
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+import java.text.SimpleDateFormat
+```
 
+Então colar esse código pronto dentro da classe:
 ```
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -146,7 +159,7 @@ pod install
 
 #### Swift
 
-Confira se o seu projeto tem declarada a permissão de câmera (NSCameraUsageDescription) no arquivo info.plist a chave NSCameraUsageDescription.
+Confira se o seu projeto tem declarada a permissão de câmera (NSCameraUsageDescription) no arquivo info.plist.
 
 Agora no arquivo `AppDelegate.swift` vamos adicionar a camada de abstração do iOS.
 Primeiro vamos importar a SDK:
