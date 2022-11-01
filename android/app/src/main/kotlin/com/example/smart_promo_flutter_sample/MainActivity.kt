@@ -1,4 +1,4 @@
-package com.example.SmartPromoSampleFlutter
+package com.example.smart_promo_flutter_sample
 
 import android.graphics.Color
 import androidx.annotation.NonNull
@@ -52,6 +52,7 @@ class MainActivity : FlutterActivity() {
         }
 
         val smartPromo = SmartPromo(campaign)
+        smartPromo.setIsHomolog(config["isHomolog"] as? Boolean ?: false)
         smartPromo.setupAccessKeyAndSecretKey(key, secret)
 
         (config["color"] as? String)?.let {
