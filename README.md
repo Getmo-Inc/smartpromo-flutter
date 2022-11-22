@@ -21,7 +21,7 @@ allprojects {
 
 Agora adicione a dependência abaixo ao arquivo `build.gradle` a nível de `módulo`:
 
-    implementation 'org.bitbucket.getmo:android-smartpromo:1.9'
+    implementation 'org.bitbucket.getmo:android-smartpromo:1.10.6'
     
 Você também precisa adicionar a compatibilidade com o Java 8 no `build.gradle` no seu módulo:
 
@@ -153,7 +153,7 @@ pod init
 
 Adicione a SDK no arquivo `Podfile`:
 ```
-pod 'SmartPromo', '1.9'
+pod 'SmartPromo', '1.10'
 ```
 
 E rode o comando de instalação:
