@@ -1,0 +1,23 @@
+PODS:
+  - Flutter (1.0.0)
+  - SmartPromo (1.10)
+
+DEPENDENCIES:
+  - Flutter (from `Flutter`)
+  - SmartPromo (= 1.10)
+
+SPEC REPOS:
+  trunk:
+    - SmartPromo
+
+EXTERNAL SOURCES:
+  Flutter:
+    :path: Flutter
+
+SPEC CHECKSUMS:
+  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
+  SmartPromo: dc985796345ab026ca01c349c1147ae3f464c245
+
+PODFILE CHECKSUM: 667cd8623831669c95ebc6925b618553d9fe864f
+
+COCOAPODS: 1.11.3

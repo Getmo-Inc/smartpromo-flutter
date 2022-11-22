@@ -46,6 +46,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.text.SimpleDateFormat
+import java.lang.Exception
 ```
 
 ##### Código
@@ -106,8 +107,10 @@ import java.text.SimpleDateFormat
         consumer.name = dict["name"] as? String
         consumer.email = dict["email"] as? String
         consumer.phone = dict["phone"] as? String
-        consumer.bdate = SimpleDateFormat("yyyy-MM-dd")
-            .parse(dict["birthday"] as? String ?: "")
+        try {
+            consumer.bdate = SimpleDateFormat("yyyy-MM-dd")
+                .parse(dict["birthday"] as? String ?: "")
+        } catch (e: Exception) {}
 
         when (dict["gender"] as? String) {
             "M" -> consumer.genre = FSPGenre.MALE
