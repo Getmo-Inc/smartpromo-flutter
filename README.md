@@ -51,6 +51,7 @@ import java.lang.Exception
             (call.arguments as? Map<String, Any>)?.let { config ->
                 when (call.method) {
                     "go" -> go(config)
+                    "goMulti" -> goMulti(config)
                     "scan" -> scan(config)
                 }
             }
@@ -58,29 +59,41 @@ import java.lang.Exception
     }
 
     private fun go(config: Map<String, Any>) {
+        val campaign = config["campaign"] as? String ?: return
         val smartPromo = smartPromo(config)
         smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
-        smartPromo?.go(this)
+        smartPromo?.go(campaign, this)
+    }
+
+    private fun goMulti(config: Map<String, Any>) {
+        val headnote = config["headnote"] as? String ?: return
+        val title = config["title"] as? String ?: return
+        val message = config["message"] as? String ?: return
+        
+        val smartPromo = smartPromo(config)
+        smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
+        smartPromo?.goMulti(headnote, title, message, this)
     }
 
     private fun scan(config: Map<String, Any>) {
+        val campaign = config["campaign"] as? String ?: return
         (config["consumerID"] as? String)?.let { consumerID ->
             val smartPromo = smartPromo(config)
-            smartPromo?.scan(consumerID, this)
+            smartPromo?.scan(campaign, consumerID, this)
         }
     }
 
     private fun smartPromo(config: Map<String, Any>): SmartPromo? {
-        val campaign = config["campaign"] as? String
         val key = config["key"] as? String
         val secret = config["secret"] as? String
 
-        if (campaign == null || key == null || secret == null) {
+        if (key == null || secret == null) {
             return null
         }
 
-        val smartPromo = SmartPromo(campaign)
+        val smartPromo = SmartPromo()
         smartPromo.setupAccessKeyAndSecretKey(key, secret)
+        smartPromo.setMetadata(config["metadata"] as? String)
 
         (config["color"] as? String)?.let {
             smartPromo.setColor(Color.parseColor(it))
@@ -189,6 +202,8 @@ extension AppDelegate {
             switch call.method {
             case "go":
                 self.go(controller: controller, config: config)
+            case "goMulti":
+                self.goMulti(controller: controller, config: config)
             case "scan":
                 self.scan(controller: controller, config: config)
             default:
@@ -198,37 +213,49 @@ extension AppDelegate {
     }
     
     private func go(controller: UIViewController, config: [String: Any]) {
+        guard let campaign = config["campaign"] as? String else { return }
         let smartPromo = smartPromo(config: config)
         smartPromo?.setConsumer(consumer(fromDict: config["consumer"] as? [String: Any]))
-        smartPromo?.go(controller)
+        smartPromo?.go(campaign, above: controller)
+    }
+
+    private func goMulti(controller: UIViewController, config: [String: Any]) {
+        guard let headnote = config["headnote"] as? String else { return }
+        guard let title = config["title"] as? String else { return }
+        guard let message = config["message"] as? String else { return }
+        
+        let smartPromo = smartPromo(config: config)
+        smartPromo?.setConsumer(consumer(fromDict: config["consumer"] as? [String: Any]))
+        smartPromo?.goMulti(withHeadnote: headnote, title: title, message: message)
     }
     
     private func scan(controller: UIViewController, config: [String: Any]) {
+        guard let campaign = config["campaign"] as? String else { return }
         guard let consumerID = config["consumerID"] as? String else { return }
         let smartPromo = smartPromo(config: config)
-        smartPromo?.scan(withConsumerID: consumerID, above: controller)
+        smartPromo?.scan(campaign, consumerID: consumerID, above: controller)
     }
     
     private func smartPromo(config: [String: Any]) -> SmartPromo? {
-        guard let campaign = config["campaign"] as? String else { return nil }
-        guard let key = config["key"] as? String else { return nil }
-        guard let secret = config["secret"] as? String else { return nil }
-        
-        let smartPromo = SmartPromo(campaign)
-        smartPromo?.setupAccessKey(key, andSecretKey: secret)
-        
-        if let color = color(fromHex: config["color"] as? String) {
-            smartPromo?.setColor(color)
-        }
-        
-        return smartPromo
+       guard let key = config["key"] as? String else { return nil }
+       guard let secret = config["secret"] as? String else { return nil }
+       
+       let smartPromo = SmartPromo()
+       smartPromo.setupAccessKey(key, andSecretKey: secret)
+       smartPromo.setMetadata(config["metadata"] as? String)
+       
+       if let color = color(fromHex: config["color"] as? String) {
+           smartPromo.setColor(color)
+       }
+       
+       return smartPromo
     }
     
     private func consumer(fromDict dict: [String: Any]?) -> FSPConsumer? {
         guard let dict = dict else { return nil }
 
         let consumer = FSPConsumer()
-        consumer.cpf = dict["cpf"] as? String
+        consumer.cpf = dict["consumerID"] as? String
         consumer.name = dict["name"] as? String
         consumer.email = dict["email"] as? String
         consumer.phone = dict["phone"] as? String
@@ -290,38 +317,22 @@ extension AppDelegate {
 ### Utilização no Flutter
 
 A parte final é utilizar a camada de abstração criada no seu projeto Flutter.
-Precisamos importar a classe de serviços:
+#### Precisamos importar a classe de serviços e inicializá-la:
 ```
 import 'package:flutter/services.dart';
-```
 
-E então para começar a utilizar o SmartPromo, você precisa inicializar com o id da campanha e configurar as suas chaves de acesso:
-```
-  Map _createConfig() {
-    return {
-      "campaign": "{campaignID}",
-      "key": "{accessKey}",
-      "secret": "{secretKey}",
-      "color": "#18AC4F"
-    };
-  }
-```
-
-##### Iniciando a SDK no modo campanha:
-```
-  MethodChannel _smartPromo() {
+MethodChannel _smartPromo() {
     return MethodChannel('br.com.getmo.smartpromo');
-  }
-  
-  void _go() {
-    var config = _createConfig();
-    config["consumer"] = _createConsumer();
-    _smartPromo().invokeMethod('go', config);
-  }
+}
 
-  Map _createConsumer() {
+```
+
+#### Passando um consumidor
+O SmartPromo gerencia o cadastro do consumidor por você, mas caso queira otimizar a experiência de uso, você pode informar para o SmartPromo o consumidor que está utilizando o aplicativo, através da configuração:
+```
+Map _createConsumer() {
     return {
-      "cpf": "{cpf}",
+      "consumerID": "{consumerID}",
       "name": "Consumer Name",
       "email": "mail@mail.com",
       "phone": "51999999999",
@@ -337,14 +348,64 @@ E então para começar a utilizar o SmartPromo, você precisa inicializar com o 
         "zipCode": "91530060",
       }
     };
+}
+```
+
+#### Iniciando a SDK no modo campanha única:
+```
+  Map _createConfig() {
+    return {
+      "campaign": "{campaignID}",
+      "key": "{accessKey}",
+      "secret": "{secretKey}",
+      "color": "#18AC4F",
+      "metadata": "Qualquer coisa como String" // opcional
+    };
+  }
+
+  void _go() {
+    var config = _createConfig();
+    config["consumer"] = _createConsumer();
+    _smartPromo().invokeMethod('go', config);
+  }
+ ```
+
+#### Iniciando a SDK no modo de múltiplas campanhas:
+```
+  Map _createConfig() {
+    return {
+      "headnote": "{Headnote}",
+      "title": "{Title}",
+      "message": "{Message}",
+      "key": "{accessKey}",
+      "secret": "{secretKey}",
+      "color": "#18AC4F",
+      "metadata": "Qualquer coisa como String" // opcional
+    };
+  }
+
+  void _goMulti() {
+    var config = _createConfig();
+    config["consumer"] = _createConsumer();
+    _smartPromo().invokeMethod('goMulti', config);
   }
  ```
  
  ##### Iniciando a SDK no modo Scanner de notas:
 ```
+  Map _createConfig() {
+    return {
+      "campaign": "{campaignID}",
+      "key": "{accessKey}",
+      "secret": "{secretKey}",
+      "color": "#18AC4F",
+      "metadata": "Qualquer coisa como String" // opcional
+    };
+  }
+
   void _scan() {
     var config = _createConfig();
-    config["consumerID"] = "{cpf}";
+    config["consumerID"] = "{consumerID}";
     _smartPromo().invokeMethod('scan', config);
   }
  ```
