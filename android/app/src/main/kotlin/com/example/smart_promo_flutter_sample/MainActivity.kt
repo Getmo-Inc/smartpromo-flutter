@@ -24,6 +24,7 @@ class MainActivity : FlutterActivity() {
             (call.arguments as? Map<String, Any>)?.let { config ->
                 when (call.method) {
                     "go" -> go(config)
+                    "goMulti" -> goMulti(config)
                     "scan" -> scan(config)
                 }
             }
@@ -31,30 +32,41 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun go(config: Map<String, Any>) {
+        val campaign = config["campaign"] as? String ?: return
         val smartPromo = smartPromo(config)
         smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
-        smartPromo?.go(this)
+        smartPromo?.go(campaign, this)
+    }
+
+    private fun goMulti(config: Map<String, Any>) {
+        val headnote = config["headnote"] as? String ?: return
+        val title = config["title"] as? String ?: return
+        val message = config["message"] as? String ?: return
+
+        val smartPromo = smartPromo(config)
+        smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
+        smartPromo?.goMulti(headnote, title, message, this)
     }
 
     private fun scan(config: Map<String, Any>) {
+        val campaign = config["campaign"] as? String ?: return
         (config["consumerID"] as? String)?.let { consumerID ->
             val smartPromo = smartPromo(config)
-            smartPromo?.scan(consumerID, this)
+            smartPromo?.scan(campaign, consumerID, this)
         }
     }
 
     private fun smartPromo(config: Map<String, Any>): SmartPromo? {
-        val campaign = config["campaign"] as? String
         val key = config["key"] as? String
         val secret = config["secret"] as? String
 
-        if (campaign == null || key == null || secret == null) {
+        if (key == null || secret == null) {
             return null
         }
 
-        val smartPromo = SmartPromo(campaign)
-        smartPromo.setIsHomolog(config["isHomolog"] as? Boolean ?: false)
+        val smartPromo = SmartPromo()
         smartPromo.setupAccessKeyAndSecretKey(key, secret)
+        smartPromo.setMetadata(config["metadata"] as? String)
 
         (config["color"] as? String)?.let {
             smartPromo.setColor(Color.parseColor(it))

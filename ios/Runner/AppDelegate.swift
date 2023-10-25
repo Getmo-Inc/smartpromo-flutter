@@ -31,6 +31,8 @@ extension AppDelegate {
             switch call.method {
             case "go":
                 self.go(controller: controller, config: config)
+            case "goMulti":
+                self.goMulti(controller: controller, config: config)
             case "scan":
                 self.scan(controller: controller, config: config)
             default:
@@ -38,39 +40,51 @@ extension AppDelegate {
             }
         }
     }
-    
+
     private func go(controller: UIViewController, config: [String: Any]) {
+        guard let campaign = config["campaign"] as? String else { return }
         let smartPromo = smartPromo(config: config)
         smartPromo?.setConsumer(consumer(fromDict: config["consumer"] as? [String: Any]))
-        smartPromo?.go(controller)
+        smartPromo?.go(campaign, above: controller)
     }
-    
+
+    private func goMulti(controller: UIViewController, config: [String: Any]) {
+        guard let headnote = config["headnote"] as? String else { return }
+        guard let title = config["title"] as? String else { return }
+        guard let message = config["message"] as? String else { return }
+
+        let smartPromo = smartPromo(config: config)
+        smartPromo?.setConsumer(consumer(fromDict: config["consumer"] as? [String: Any]))
+        smartPromo?.goMulti(withHeadnote: headnote, title: title, message: message)
+    }
+
     private func scan(controller: UIViewController, config: [String: Any]) {
+        guard let campaign = config["campaign"] as? String else { return }
         guard let consumerID = config["consumerID"] as? String else { return }
         let smartPromo = smartPromo(config: config)
-        smartPromo?.scan(withConsumerID: consumerID, above: controller)
+        smartPromo?.scan(campaign, consumerID: consumerID, above: controller)
     }
-    
+
     private func smartPromo(config: [String: Any]) -> SmartPromo? {
-        guard let campaign = config["campaign"] as? String else { return nil }
-        guard let key = config["key"] as? String else { return nil }
-        guard let secret = config["secret"] as? String else { return nil }
-        
-        let smartPromo = SmartPromo(campaign)
-        smartPromo?.setupAccessKey(key, andSecretKey: secret)
-        
-        if let color = color(fromHex: config["color"] as? String) {
-            smartPromo?.setColor(color)
-        }
-        
-        return smartPromo
+       guard let key = config["key"] as? String else { return nil }
+       guard let secret = config["secret"] as? String else { return nil }
+
+       let smartPromo = SmartPromo()
+       smartPromo.setupAccessKey(key, andSecretKey: secret)
+       smartPromo.setMetadata(config["metadata"] as? String)
+
+       if let color = color(fromHex: config["color"] as? String) {
+           smartPromo.setColor(color)
+       }
+
+       return smartPromo
     }
-    
+
     private func consumer(fromDict dict: [String: Any]?) -> FSPConsumer? {
         guard let dict = dict else { return nil }
 
         let consumer = FSPConsumer()
-        consumer.cpf = dict["cpf"] as? String
+        consumer.cpf = dict["consumerID"] as? String
         consumer.name = dict["name"] as? String
         consumer.email = dict["email"] as? String
         consumer.phone = dict["phone"] as? String
