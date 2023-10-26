@@ -156,7 +156,7 @@ pod init
 
 Adicione a SDK no arquivo `Podfile`:
 ```
-pod 'SmartPromo', '2.0.0'
+pod 'SmartPromo', '2.0.1'
 ```
 
 E rode o comando de instalação:
