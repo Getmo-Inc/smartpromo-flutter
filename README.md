@@ -11,7 +11,7 @@ Primeiramente confirme que seu projeto Android esteja configurado para `minSdkVe
 #### Gradle
 SmartPromo pode ser adicionado no seu projeto `Android` utilizando o `Gradle`, para isto adicione a dependência abaixo ao arquivo `build.gradle` a nível de `módulo`:
 
-    implementation 'br.com.getmo:smartpromo:2.2.0'
+    implementation 'br.com.getmo:smartpromo:2.6.0'
 
 Verifique se está usando a versão 1.9 ou superior do Google Material Design:
     
@@ -160,7 +160,7 @@ pod init
 
 Adicione a SDK no arquivo `Podfile`:
 ```
-pod 'SmartPromo', '2.2.2'
+pod 'SmartPromo', '2.6.0'
 ```
 
 E rode o comando de instalação:
