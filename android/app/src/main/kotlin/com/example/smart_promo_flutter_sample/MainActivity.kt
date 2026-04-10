@@ -45,14 +45,14 @@ class MainActivity : FlutterActivity() {
 
         val smartPromo = smartPromo(config)
         smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
-        smartPromo?.goMulti(headnote, title, message, this)
+        smartPromo?.goMulti(headnote = headnote, title = title, message = message, activity = this)
     }
 
     private fun scan(config: Map<String, Any>) {
         val campaign = config["campaign"] as? String ?: return
         (config["consumerID"] as? String)?.let { consumerID ->
             val smartPromo = smartPromo(config)
-            smartPromo?.scan(campaign, consumerID, this)
+            smartPromo?.goScan(campaignId = campaign, consumerId = consumerID, activity = this)
         }
     }
 
@@ -64,8 +64,8 @@ class MainActivity : FlutterActivity() {
             return null
         }
 
-        val smartPromo = SmartPromo()
-        smartPromo.setupAccessKeyAndSecretKey(key, secret)
+        val isHomolog = config["isHomolog"] as? Boolean ?: false
+        val smartPromo = SmartPromo(accessKey = key, secretKey = secret, isHomolog = isHomolog)
         smartPromo.setMetadata(config["metadata"] as? String)
 
         (config["color"] as? String)?.let {

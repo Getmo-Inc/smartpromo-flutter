@@ -11,7 +11,7 @@ Primeiramente confirme que seu projeto Android esteja configurado para `minSdkVe
 #### Gradle
 SmartPromo pode ser adicionado no seu projeto `Android` utilizando o `Gradle`, para isto adicione a dependência abaixo ao arquivo `build.gradle` a nível de `módulo`:
 
-    implementation 'br.com.getmo:smartpromo:2.6.4'
+    implementation 'br.com.getmo:smartpromo:3.0.0'
 
 Verifique se está usando a versão 1.9 ou superior do Google Material Design:
     
@@ -76,14 +76,14 @@ import java.lang.Exception
         
         val smartPromo = smartPromo(config)
         smartPromo?.setConsumer(consumer(config["consumer"] as? Map<String, Any>))
-        smartPromo?.goMulti(headnote, title, message, this)
+        smartPromo?.goMulti(headnote = headnote, title = title, message = message, activity = this)
     }
 
     private fun scan(config: Map<String, Any>) {
         val campaign = config["campaign"] as? String ?: return
         (config["consumerID"] as? String)?.let { consumerID ->
             val smartPromo = smartPromo(config)
-            smartPromo?.scan(campaign, consumerID, this)
+            smartPromo?.goScan(campaignId = campaign, consumerId = consumerID, activity = this)
         }
     }
 
@@ -95,8 +95,8 @@ import java.lang.Exception
             return null
         }
 
-        val smartPromo = SmartPromo()
-        smartPromo.setupAccessKeyAndSecretKey(key, secret)
+        val isHomolog = config["isHomolog"] as? Boolean ?: false
+        val smartPromo = SmartPromo(accessKey = key, secretKey = secret, isHomolog = isHomolog)
         smartPromo.setMetadata(config["metadata"] as? String)
 
         (config["color"] as? String)?.let {
@@ -148,25 +148,16 @@ import java.lang.Exception
 
 ### iOS
 
-Primeiramente confirme que seu projeto iOS esteja configurado para `IPHONEOS_DEPLOYMENT_TARGET = 11.0;` ou superior.
+Primeiramente confirme que seu projeto iOS esteja configurado para `IPHONEOS_DEPLOYMENT_TARGET = 14.0;` ou superior.
 
-#### Cocoapods
+#### Swift Package Manager
 
-Caso seu projeto ainda não esteja utilizando o `Cocoapods`, precisaremos inicializar ele: 
-```
-cd ios
-pod init
-```
+1. No Xcode, vá em **File → Add Package Dependencies...**
+2. Insira a URL do repositório: `https://github.com/Getmo-Inc/SmartPromoiOS.git`
+3. Selecione a versão desejada (ex: `3.0.0`)
+4. Clique em **Add Package**
 
-Adicione a SDK no arquivo `Podfile`:
-```
-pod 'SmartPromo', '2.6.1'
-```
-
-E rode o comando de instalação:
-```
-pod install
-```
+> **Nota:** O CocoaPods não é mais suportado. A última versão disponível via CocoaPods é a `2.6.4` e não receberá mais atualizações. Recomendamos migrar para o Swift Package Manager.
 
 #### Swift
 
