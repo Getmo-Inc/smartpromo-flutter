@@ -1,6 +1,6 @@
 # SmartPromo Flutter
 
-O SmartPromo é uma SDK para envio de notas em campanhas promocionais, compatível com Android API 21+ e iOS 11+
+O SmartPromo é uma SDK para envio de notas em campanhas promocionais, compatível com Android API 21+ e iOS 14+
 
 ## Instalação
 
@@ -11,7 +11,7 @@ Primeiramente confirme que seu projeto Android esteja configurado para `minSdkVe
 #### Gradle
 SmartPromo pode ser adicionado no seu projeto `Android` utilizando o `Gradle`, para isto adicione a dependência abaixo ao arquivo `build.gradle` a nível de `módulo`:
 
-    implementation 'br.com.getmo:smartpromo:3.0.3'
+    implementation 'br.com.getmo:smartpromo:3.0.5'
 
 Verifique se está usando a versão 1.9 ou superior do Google Material Design:
     
@@ -154,7 +154,7 @@ Primeiramente confirme que seu projeto iOS esteja configurado para `IPHONEOS_DEP
 
 1. No Xcode, vá em **File → Add Package Dependencies...**
 2. Insira a URL do repositório: `https://github.com/Getmo-Inc/SmartPromoiOS.git`
-3. Selecione a versão desejada (ex: `3.0.3`)
+3. Selecione a versão desejada (ex: `3.0.5`)
 4. Clique em **Add Package**
 
 > **Nota:** O CocoaPods não é mais suportado. A última versão disponível via CocoaPods é a `2.6.4` e não receberá mais atualizações. Recomendamos migrar para o Swift Package Manager.
